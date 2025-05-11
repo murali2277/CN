@@ -1,0 +1,77 @@
+ Aim:
+To implement a TCP socket-based HTTP client-server communication in Java where the client sends a string to the server, and the server reverses the string and returns it.
+
+Algorithm:
+Server Side:
+Create a server socket and wait for client connection.
+Accept the client request and open input/output streams.
+Read the string sent by the client.
+Reverse the string.
+Send the reversed string back to the client.
+Close the streams and socket.
+
+Client Side:
+Connect to the server using socket.
+Send a string to the server using output stream.
+Receive the reversed string from the server using input stream.
+Display the reversed string.
+Close the streams and socket.
+
+Program:
+Server.java
+import java.io.*;
+import java.net.*;
+
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = new ServerSocket(1234);
+        System.out.println("Server is waiting for client...");
+
+        Socket socket = serverSocket.accept();
+        System.out.println("Client connected.");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        String received = in.readLine();
+        String reversed = new StringBuilder(received).reverse().toString();
+
+        out.println(reversed);
+
+        in.close();
+        out.close();
+        socket.close();
+        serverSocket.close();
+    }
+}
+
+Client.java
+import java.io.*;
+import java.net.*;
+
+public class Client {
+    public static void main(String[] args) throws IOException {
+        Socket socket = new Socket("localhost", 1234);
+
+        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        System.out.print("Enter a string: ");
+        String input = userInput.readLine();
+        out.println(input);
+
+        String response = in.readLine();
+        System.out.println("Reversed from server: " + response);
+
+        in.close();
+        out.close();
+        socket.close();
+    }
+}
+
+output:
+You type:
+Hello from User1
+You receive:
+Friend: Hi User1, this is User2

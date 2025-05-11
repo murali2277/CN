@@ -1,0 +1,65 @@
+Aim:
+To implement a UDP-based chat system in Java where two users can send and receive messages simultaneously.
+
+Algorithm:
+Sender Thread:
+Create a DatagramSocket.
+Read message from the user.
+Send message to the other user's IP and port.
+
+Receiver Thread:
+Create a DatagramSocket.
+Receive message from other user.
+Display the message.
+
+ChatUser.java
+import java.io.*;
+import java.net.*;
+
+public class ChatUser {
+    public static void main(String[] args) throws Exception {
+        DatagramSocket socket = new DatagramSocket(Integer.parseInt(args[0]));
+
+        // Receiver Thread
+        Thread receiveThread = new Thread(() -> {
+            byte[] buffer = new byte[1024];
+            while (true) {
+                try {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet);
+                    String msg = new String(packet.getData(), 0, packet.getLength());
+                    System.out.println("Friend: " + msg);
+                } catch (IOException e) {
+                    break;
+                }
+            }
+        });
+
+        // Sender Thread
+        Thread sendThread = new Thread(() -> {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            try {
+                InetAddress ip = InetAddress.getByName("localhost");
+                int otherPort = Integer.parseInt(args[1]);
+                while (true) {
+                    String msg = reader.readLine();
+                    byte[] data = msg.getBytes();
+                    DatagramPacket packet = new DatagramPacket(data, data.length, ip, otherPort);
+                    socket.send(packet);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        receiveThread.start();
+        sendThread.start();
+    }
+}
+
+output
+$ java ChatUser 5000 5001
+Hello from User 1
+Friend: Hi User 1, this is User 2
+How are you?
+Friend: I'm good! What about you?

@@ -1,0 +1,98 @@
+Aim:
+To implement a TCP-based file transfer system in Java where the client requests a file and the server sends the file if available.
+
+Algorithm:
+
+Server:
+Create a server socket and wait for client connection.
+Read the filename requested by the client.
+If the file exists, read its contents and send it to the client.
+If the file does not exist, send an error message.
+Close connections.
+
+Client:
+Connect to the server using a socket.
+Send the filename to the server.
+Receive the file content and save it.
+Close connections.
+
+FileServer.java
+import java.io.*;
+import java.net.*;
+
+public class FileServer {
+    public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = new ServerSocket(9999);
+        System.out.println("Server started...");
+
+        Socket socket = serverSocket.accept();
+        System.out.println("Client connected.");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+
+        String fileName = in.readLine();
+        File file = new File(fileName);
+
+        if (file.exists()) {
+            FileInputStream fis = new FileInputStream(file);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+            fis.close();
+        } else {
+            out.write("File not found".getBytes());
+        }
+
+        out.flush();
+        socket.close();
+        serverSocket.close();
+    }
+}
+
+FileClient.java
+import java.io.*;
+import java.net.*;
+
+public class FileClient {
+    public static void main(String[] args) throws IOException {
+        Socket socket = new Socket("localhost", 9999);
+
+        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        InputStream in = socket.getInputStream();
+
+        System.out.print("Enter filename to download: ");
+        String fileName = userInput.readLine();
+        out.write(fileName);
+        out.newLine();
+        out.flush();
+
+        FileOutputStream fos = new FileOutputStream("downloaded_" + fileName);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = in.read(buffer)) != -1) {
+            fos.write(buffer, 0, bytesRead);
+        }
+
+        System.out.println("File received and saved as downloaded_" + fileName);
+
+        fos.close();
+        in.close();
+        out.close();
+        socket.close();
+    }
+}
+
+output:
+Terminal 1 (Server):
+$ java FileServer
+Server started...
+Client connected.
+
+Terminal 2 (Client):
+$ java FileClient
+Enter filename to download: test.txt
+File received and saved as downloaded_test.txt
