@@ -1,0 +1,105 @@
+Aim:
+To simulate Link State Routing using Dijkstra’s Algorithm for calculating the shortest path in a network graph, 
+where the nodes represent routers and edges represent the links between them.
+
+Algorithm:
+Graph Representation:
+
+Represent the network as a weighted graph where each node represents a router and each edge represents the link between routers with associated weights (costs).
+
+Dijkstra's Algorithm Steps:
+
+Initialize distances for all nodes (routers) as infinity, except for the source node which has a distance of 0.
+
+Mark all nodes as unvisited.
+
+For each node, consider its neighbors and calculate the tentative distances.
+
+Update the distances and mark the node as visited.
+
+Repeat the process until the shortest path to all nodes is found.
+
+Java Program: DijkstraLinkStateRouting.java
+import java.util.*;
+
+public class DijkstraLinkStateRouting {
+    
+    // Method to implement Dijkstra's Algorithm
+    public static void dijkstra(int graph[][], int src, int n) {
+        // Create a set to store visited nodes
+        boolean visited[] = new boolean[n];
+        
+        // Create a distance array and initialize with infinity
+        int distance[] = new int[n];
+        Arrays.fill(distance, Integer.MAX_VALUE);
+        distance[src] = 0;
+        
+        // Create a priority queue to store nodes with minimum distance
+        PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a.distance));
+        pq.add(new Node(src, 0));
+        
+        while (!pq.isEmpty()) {
+            Node node = pq.poll();
+            int u = node.node;
+            
+            if (visited[u]) continue;
+            visited[u] = true;
+            
+            // Update distances for the neighbors of the current node
+            for (int v = 0; v < n; v++) {
+                if (!visited[v] && graph[u][v] != 0 && distance[u] + graph[u][v] < distance[v]) {
+                    distance[v] = distance[u] + graph[u][v];
+                    pq.add(new Node(v, distance[v]));
+                }
+            }
+        }
+        
+        // Print the shortest distances from the source node
+        System.out.println("Shortest distances from node " + src + ":");
+        for (int i = 0; i < n; i++) {
+            System.out.println("Node " + i + " : " + distance[i]);
+        }
+    }
+
+    // Node class to store node and its corresponding distance
+    static class Node {
+        int node;
+        int distance;
+        
+        Node(int node, int distance) {
+            this.node = node;
+            this.distance = distance;
+        }
+    }
+
+    public static void main(String[] args) {
+        // Create a graph with nodes and edges
+        int n = 6;  // Number of nodes (routers)
+        int graph[][] = new int[n][n];
+        
+        // Example graph (Adjacency matrix representation)
+        // 0 means no direct connection between nodes
+        graph[0][1] = 7;
+        graph[0][2] = 9;
+        graph[0][5] = 14;
+        graph[1][2] = 10;
+        graph[1][3] = 15;
+        graph[2][3] = 11;
+        graph[2][5] = 2;
+        graph[3][4] = 6;
+        graph[4][5] = 9;
+        
+        // Call Dijkstra's Algorithm starting from node 0
+        dijkstra(graph, 0, n);
+    }
+}
+
+Output
+Shortest distances from node 0:
+Node 0 : 0
+Node 1 : 7
+Node 2 : 9
+Node 3 : 20
+Node 4 : 20
+Node 5 : 11
+

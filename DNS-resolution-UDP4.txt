@@ -1,0 +1,98 @@
+Aim:
+To simulate the DNS resolution process using UDP sockets in Java, where the client sends a domain name and the server returns the corresponding IP address.
+
+Algorithm:
+Server:
+
+Create a UDP socket and wait for incoming packets.
+
+Receive the domain name from the client.
+
+Check the domain in a static table (e.g., HashMap).
+
+Send the corresponding IP address (or error) back to the client.
+
+Client:
+
+Send a domain name as a request to the server.
+
+Receive the resolved IP address from the server.
+
+Display the response.
+
+Program:
+DnsServer.java
+import java.net.*;
+import java.util.*;
+
+public class DnsServer {
+    public static void main(String[] args) throws Exception {
+        DatagramSocket socket = new DatagramSocket(9876);
+        byte[] receive = new byte[1024];
+        byte[] send;
+
+        // DNS Table
+        HashMap<String, String> dnsTable = new HashMap<>();
+        dnsTable.put("google.com", "142.250.182.14");
+        dnsTable.put("yahoo.com", "98.137.11.164");
+        dnsTable.put("openai.com", "104.18.12.242");
+
+        System.out.println("DNS Server running...");
+
+        while (true) {
+            DatagramPacket packet = new DatagramPacket(receive, receive.length);
+            socket.receive(packet);
+
+            String domain = new String(packet.getData(), 0, packet.getLength());
+            System.out.println("Received domain: " + domain);
+
+            String ip = dnsTable.getOrDefault(domain, "Domain not found");
+            send = ip.getBytes();
+
+            InetAddress clientAddress = packet.getAddress();
+            int clientPort = packet.getPort();
+
+            DatagramPacket response = new DatagramPacket(send, send.length, clientAddress, clientPort);
+            socket.send(response);
+        }
+    }
+}
+
+DnsClient.java
+import java.net.*;
+import java.util.Scanner;
+
+public class DnsClient {
+    public static void main(String[] args) throws Exception {
+        DatagramSocket socket = new DatagramSocket();
+        InetAddress ip = InetAddress.getByName("localhost");
+
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter domain name: ");
+        String domain = sc.nextLine();
+
+        byte[] send = domain.getBytes();
+        DatagramPacket request = new DatagramPacket(send, send.length, ip, 9876);
+        socket.send(request);
+
+        byte[] receive = new byte[1024];
+        DatagramPacket response = new DatagramPacket(receive, receive.length);
+        socket.receive(response);
+
+        String resolvedIP = new String(response.getData(), 0, response.getLength());
+        System.out.println("Resolved IP: " + resolvedIP);
+
+        socket.close();
+    }
+}
+
+output:
+Terminal 1 (Server)
+$ java DnsServer
+DNS Server running...
+Received domain: google.com
+
+Terminal 2 (Client)
+$ java DnsClient
+Enter domain name: google.com
+Resolved IP: 142.250.182.14

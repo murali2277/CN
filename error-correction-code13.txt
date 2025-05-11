@@ -1,0 +1,175 @@
+Aim:
+To simulate Error Correction Code using Hamming Code, where a sender transmits a message with additional parity bits for error detection and correction. 
+The receiver checks for errors and corrects them if possible.
+
+Algorithm:
+Sender Side (Encoding):
+
+Convert the data bits into a message.
+
+Insert parity bits at positions that are powers of 2.
+
+Calculate the parity bits based on the message and parity positions.
+
+Receiver Side (Decoding):
+
+The receiver checks the parity bits to detect if there is any error.
+
+If an error is detected, the receiver can correct the bit that is in error.
+
+The corrected message is then displayed.
+
+Java Program: HammingCode.java
+import java.util.*;
+
+public class HammingCode {
+    
+    // Method to calculate parity bits and encode the message
+    public static String encode(String data) {
+        int m = data.length();
+        int r = 1;
+
+        // Find the number of parity bits required
+        while (Math.pow(2, r) < m + r + 1) {
+            r++;
+        }
+
+        // Create an array to hold the encoded message
+        char[] encodedMessage = new char[m + r];
+
+        int j = 0, k = 0;
+
+        // Fill the encoded message with the data bits
+        for (int i = 0; i < m + r; i++) {
+            // Insert parity bits at positions 1, 2, 4, 8...
+            if ((i + 1) == Math.pow(2, k)) {
+                encodedMessage[i] = '0';
+                k++;
+            } else {
+                encodedMessage[i] = data.charAt(j);
+                j++;
+            }
+        }
+
+        // Calculate parity bits
+        for (int i = 0; i < r; i++) {
+            int parityBitPos = (int) Math.pow(2, i);
+            int count = 0;
+            
+            // Count the number of 1's in positions that this parity bit covers
+            for (int j = 1; j <= m + r; j++) {
+                if ((j & parityBitPos) == parityBitPos) {
+                    if (encodedMessage[j - 1] == '1') {
+                        count++;
+                    }
+                }
+            }
+            // Set parity bit to make the total number of 1's even
+            if (count % 2 == 0) {
+                encodedMessage[parityBitPos - 1] = '0';
+            } else {
+                encodedMessage[parityBitPos - 1] = '1';
+            }
+        }
+
+        // Return the encoded message as a string
+        return new String(encodedMessage);
+    }
+
+    // Method to decode and detect errors in the message
+    public static String decode(String encodedMessage) {
+        int m = encodedMessage.length();
+        int r = 1;
+
+        // Find the number of parity bits
+        while (Math.pow(2, r) < m + 1) {
+            r++;
+        }
+
+        int[] parityBits = new int[r];
+
+        // Check for errors using the parity bits
+        for (int i = 0; i < r; i++) {
+            int parityBitPos = (int) Math.pow(2, i);
+            int count = 0;
+
+            // Check all bits that this parity bit covers
+            for (int j = 1; j <= m; j++) {
+                if ((j & parityBitPos) == parityBitPos) {
+                    if (encodedMessage.charAt(j - 1) == '1') {
+                        count++;
+                    }
+                }
+            }
+
+            // If the count is odd, there is an error in the parity bit
+            if (count % 2 != 0) {
+                parityBits[i] = 1;
+            } else {
+                parityBits[i] = 0;
+            }
+        }
+
+        // Find the error position
+        int errorPos = 0;
+        for (int i = 0; i < r; i++) {
+            errorPos += parityBits[i] * Math.pow(2, i);
+        }
+
+        // Correct the error if found
+        if (errorPos != 0) {
+            System.out.println("Error detected at position " + errorPos);
+            char[] correctedMessage = encodedMessage.toCharArray();
+            correctedMessage[errorPos - 1] = correctedMessage[errorPos - 1] == '1' ? '0' : '1';
+            encodedMessage = new String(correctedMessage);
+        } else {
+            System.out.println("No error detected.");
+        }
+
+        // Extract the original data from the decoded message
+        StringBuilder originalMessage = new StringBuilder();
+        int k = 0;
+        for (int i = 0; i < m; i++) {
+            if ((i + 1) != Math.pow(2, k)) {
+                originalMessage.append(encodedMessage.charAt(i));
+            } else {
+                k++;
+            }
+        }
+
+        return originalMessage.toString();
+    }
+
+    public static void main(String[] args) {
+        // Input message to encode
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the binary data to encode: ");
+        String data = scanner.nextLine();
+
+        // Encode the data
+        String encodedMessage = encode(data);
+        System.out.println("Encoded Message: " + encodedMessage);
+
+        // Introduce an error (optional)
+        System.out.print("Enter the position to introduce an error (0 for no error): ");
+        int errorPos = scanner.nextInt();
+        if (errorPos > 0) {
+            char[] messageWithError = encodedMessage.toCharArray();
+            messageWithError[errorPos - 1] = messageWithError[errorPos - 1] == '1' ? '0' : '1';
+            encodedMessage = new String(messageWithError);
+            System.out.println("Message with error: " + encodedMessage);
+        }
+
+        // Decode the message and check for errors
+        String decodedMessage = decode(encodedMessage);
+        System.out.println("Decoded Message: " + decodedMessage);
+    }
+}
+
+Output
+Enter the binary data to encode: 1011
+Encoded Message: 1110110
+Enter the position to introduce an error (0 for no error): 5
+Message with error: 1111110
+Error detected at position 5
+Decoded Message: 1011

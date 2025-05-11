@@ -1,0 +1,126 @@
+Aim:
+To simulate the Link State Routing Algorithm using Dijkstra’s method, where each router constructs its own routing table based on knowledge of the network topology.
+
+Algorithm (Link State Routing using Dijkstra's Method):
+Each router initially has complete knowledge of the network (the link costs and topology).
+
+Each router calculates the shortest path to every other router using Dijkstra’s algorithm.
+
+The router then updates its routing table, which contains the shortest path and next-hop router for each destination.
+
+Java Program: 
+LinkStateRouting.java
+import java.util.*;
+
+public class LinkStateRouting {
+    static final int INF = 999;
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of routers: ");
+        int n = sc.nextInt();
+
+        int[][] cost = new int[n][n];
+        System.out.println("Enter the cost matrix (999 for infinity):");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cost[i][j] = sc.nextInt();
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            dijkstra(i, n, cost);
+        }
+
+        sc.close();
+    }
+
+    public static void dijkstra(int src, int n, int[][] cost) {
+        int[] dist = new int[n];
+        int[] parent = new int[n];
+        boolean[] visited = new boolean[n];
+
+        Arrays.fill(dist, INF);
+        dist[src] = 0;
+        parent[src] = -1;
+
+        for (int i = 0; i < n; i++) {
+            int u = minDistance(dist, visited, n);
+            visited[u] = true;
+
+            for (int v = 0; v < n; v++) {
+                if (!visited[v] && cost[u][v] != INF && dist[u] != INF && dist[u] + cost[u][v] < dist[v]) {
+                    dist[v] = dist[u] + cost[u][v];
+                    parent[v] = u;
+                }
+            }
+        }
+
+        printSolution(src, n, dist, parent);
+    }
+
+    public static int minDistance(int[] dist, boolean[] visited, int n) {
+        int min = INF, minIndex = -1;
+        for (int v = 0; v < n; v++) {
+            if (!visited[v] && dist[v] <= min) {
+                min = dist[v];
+                minIndex = v;
+            }
+        }
+        return minIndex;
+    }
+
+    public static void printSolution(int src, int n, int[] dist, int[] parent) {
+        System.out.println("\nRouter " + src + " Routing Table:");
+        System.out.println("Destination\tDistance\tPath");
+        for (int i = 0; i < n; i++) {
+            if (i != src) {
+                System.out.print(i + "\t\t" + dist[i] + "\t\t");
+                printPath(i, parent);
+                System.out.println();
+            }
+        }
+    }
+
+    public static void printPath(int j, int[] parent) {
+        if (parent[j] == -1) {
+            return;
+        }
+        printPath(parent[j], parent);
+        System.out.print(j + " ");
+    }
+}
+
+Input:
+Enter number of routers: 4
+Enter the cost matrix (999 for infinity):
+0 10 999 30
+10 0 50 999
+999 50 0 10
+30 999 10 0
+
+Output:
+Router 0 Routing Table:
+Destination    Distance    Path
+1              10          0 1
+2              60          0 3 2
+3              30          0 3
+
+Router 1 Routing Table:
+Destination    Distance    Path
+0              10          1 0
+2              50          1 2
+3              40          1 2 3
+
+Router 2 Routing Table:
+Destination    Distance    Path
+0              60          2 3 0
+1              50          2 1
+3              10          2 3
+
+Router 3 Routing Table:
+Destination    Distance    Path
+0              30          3 0
+1              40          3 1
+2              10          3 2

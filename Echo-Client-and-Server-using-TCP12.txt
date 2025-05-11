@@ -1,0 +1,88 @@
+Aim:
+To create a simple Echo Client and Server using TCP sockets, where the client sends a message to the server, 
+and the server sends the same message back (echoes it).
+
+Algorithm:
+Server Side:
+
+Create a server socket to listen for incoming connections on a specific port.
+
+Accept the connection from the client.
+
+Read the incoming message from the client.
+
+Send the same message back to the client (echo it).
+
+Client Side:
+
+Create a client socket to connect to the server.
+
+Send a message to the server.
+
+Wait for the server's response and print it.
+
+Java Program: EchoServer.java (Server)
+import java.io.*;
+import java.net.*;
+
+public class EchoServer {
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(1234)) {
+            System.out.println("Echo Server started, waiting for client...");
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected...");
+
+                // Create input and output streams for communication with the client
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                // Read the message sent by the client
+                String message = in.readLine();
+                System.out.println("Received from client: " + message);
+
+                // Send the same message back to the client (echo)
+                out.println(message);
+
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Java Program: EchoClient.java (Client)
+import java.io.*;
+import java.net.*;
+
+public class EchoClient {
+    public static void main(String[] args) {
+        try (Socket socket = new Socket("localhost", 1234)) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Send a message to the server
+            String message = "Hello, Echo Server!";
+            out.println(message);
+            System.out.println("Sent to server: " + message);
+
+            // Receive the echoed message from the server
+            String response = in.readLine();
+            System.out.println("Received from server: " + response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Output:
+Server Side (EchoServer.java) Output:
+Echo Server started, waiting for client...
+Client connected...
+Received from client: Hello, Echo Server!
+
+Client Side (EchoClient.java) Output:
+Sent to server: Hello, Echo Server!
+Received from server: Hello, Echo Server!

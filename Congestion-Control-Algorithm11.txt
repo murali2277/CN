@@ -1,0 +1,131 @@
+Aim:
+To simulate a congestion control algorithm (such as TCP Tahoe or AIMD - Additive Increase Multiplicative Decrease) using TCP, 
+where the client simulates the sender's congestion window (cwnd) and adjusts it based on packet loss and successful packet transmission.
+
+Algorithm:
+Server Side:
+
+Listen for incoming connections from the client.
+
+Simulate the congestion control mechanism by adjusting the congestion window size.
+
+Client Side:
+
+The client sends packets to the server, simulating the sending process.
+
+The client waits for acknowledgments (ACKs) from the server.
+
+Congestion Control:
+
+The client dynamically adjusts its congestion window (cwnd) based on the server's responses and simulated packet losses.
+
+TCP Tahoe: When a packet loss is detected, the congestion window is reset to 1 (slow start phase).
+
+Java Program: CongestionControlServer.java (Server)
+import java.io.*;
+import java.net.*;
+
+public class CongestionControlServer {
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(8080)) {
+            System.out.println("Congestion Control Server started...");
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected...");
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                // Simulating receiving data and sending ACKs
+                String message;
+                while ((message = in.readLine()) != null) {
+                    System.out.println("Received: " + message);
+
+                    // Simulate packet loss or successful transmission
+                    if (Math.random() > 0.2) {  // Simulating packet loss with 20% probability
+                        out.println("ACK");
+                    } else {
+                        out.println("LOSS");
+                    }
+                }
+
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Java Program: CongestionControlClient.java (Client)
+import java.io.*;
+import java.net.*;
+
+public class CongestionControlClient {
+    public static void main(String[] args) {
+        try (Socket socket = new Socket("localhost", 8080)) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Simulate congestion window (cwnd)
+            int cwnd = 1; // Initial congestion window size
+            int ssthresh = 64; // Slow start threshold
+            int packetCount = 0; // Number of packets sent
+
+            // Simulate sending packets
+            while (packetCount < 100) {
+                for (int i = 0; i < cwnd; i++) {
+                    String packet = "Packet " + (packetCount + 1);
+                    System.out.println("Sending: " + packet);
+                    out.println(packet);  // Send packet to the server
+                    packetCount++;
+                }
+
+                // Wait for the server's response (ACK or LOSS)
+                String response = in.readLine();
+                if ("ACK".equals(response)) {
+                    // Successful transmission
+                    if (cwnd < ssthresh) {
+                        cwnd *= 2;  // Slow start (exponential increase)
+                    } else {
+                        cwnd++;  // Congestion avoidance (linear increase)
+                    }
+                    System.out.println("Received: ACK, cwnd: " + cwnd);
+                } else if ("LOSS".equals(response)) {
+                    // Packet loss detected
+                    cwnd = Math.max(1, cwnd / 2);  // Multiplicative decrease
+                    System.out.println("Received: LOSS, cwnd: " + cwnd);
+                }
+                
+                // Simulate a delay
+                Thread.sleep(500);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Output
+Server Side (CongestionControlServer.java) Output:
+Congestion Control Server started...
+Client connected...
+Received: Packet 1
+Received: Packet 2
+Received: Packet 3
+...
+
+Client Side (CongestionControlClient.java) Output:
+Sending: Packet 1
+Sending: Packet 2
+Sending: Packet 3
+Received: ACK, cwnd: 2
+Sending: Packet 4
+Sending: Packet 5
+Received: LOSS, cwnd: 1
+Sending: Packet 6
+Received: ACK, cwnd: 2
+Sending: Packet 7
+Sending: Packet 8
+...

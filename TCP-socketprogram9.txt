@@ -1,0 +1,108 @@
+Aim:
+To create a simple HTTP Echo Client using TCP sockets, where the client sends an HTTP request to a server, and the server sends back the same HTTP response (echoes the request).
+
+Algorithm:
+Client Side:
+
+Create a socket connection to the server.
+
+Send an HTTP GET request to the server.
+
+Receive the response from the server and display it.
+
+Server Side:
+
+Set up a TCP server that listens for incoming connections.
+
+Read the HTTP request from the client.
+
+Send back the same request as an HTTP response.
+
+Java Program: HTTPServer.java (Server)
+import java.io.*;
+import java.net.*;
+
+public class HTTPServer {
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(8080)) {
+            System.out.println("HTTP Server started on port 8080...");
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected...");
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                // Read HTTP request from the client
+                String line;
+                StringBuilder request = new StringBuilder();
+                while ((line = in.readLine()) != null && !line.isEmpty()) {
+                    request.append(line).append("\r\n");
+                }
+
+                // Echo the HTTP request as HTTP response
+                String response = "HTTP/1.1 200 OK\r\n" +
+                                  "Content-Type: text/plain\r\n" +
+                                  "Content-Length: " + request.length() + "\r\n" +
+                                  "\r\n" +
+                                  request.toString();
+
+                out.print(response);
+                out.flush();
+
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Java Program: HTTPClient.java (Client)
+import java.io.*;
+import java.net.*;
+
+public class HTTPClient {
+    public static void main(String[] args) {
+        try (Socket socket = new Socket("localhost", 8080)) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Send HTTP GET request
+            String request = "GET / HTTP/1.1\r\n" +
+                             "Host: localhost\r\n" +
+                             "Connection: close\r\n" +
+                             "\r\n";
+            out.println(request);
+
+            // Receive and print the HTTP response (which is the echo)
+            String response;
+            while ((response = in.readLine()) != null) {
+                System.out.println(response);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+Output
+Server Side (HTTPServer.java) Output:
+
+HTTP Server started on port 8080...
+Client connected...
+
+Client Side (HTTPClient.java) Output:
+
+GET / HTTP/1.1
+Host: localhost
+Connection: close
+
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 64
+
+GET / HTTP/1.1
+Host: localhost
+Connection: close

@@ -1,0 +1,100 @@
+Aim:
+To simulate Cyclic Redundancy Check (CRC) error detection and demonstrate how it checks the correctness of received data using a divisor (CRC polynomial).
+
+Algorithm (CRC Error Detection):
+Sender Side:
+
+Append CRC (remainder of data divided by a divisor polynomial) to the original data.
+
+Receiver Side:
+
+Divide the received data (original data + CRC) by the same divisor polynomial.
+
+If the remainder is zero, the data is correct; otherwise, there is an error.
+
+Java Program: 
+CRCErrorDetection.java
+import java.util.*;
+
+public class CRCErrorDetection {
+    // XOR function to simulate division
+    public static String xor(String a, String b) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < a.length(); i++) {
+            result.append(a.charAt(i) == b.charAt(i) ? '0' : '1');
+        }
+        return result.toString();
+    }
+
+    // CRC encoding
+    public static String encode(String data, String divisor) {
+        int n = divisor.length();
+        String paddedData = data + "0".repeat(n - 1); // Append zeros for CRC bits
+        String remainder = paddedData;
+
+        // Perform the division
+        for (int i = 0; i < data.length(); i++) {
+            if (remainder.charAt(i) == '1') {
+                String divisorSegment = divisor + "0".repeat(i);
+                remainder = xor(remainder, divisorSegment);
+            }
+        }
+        return data + remainder.substring(remainder.length() - (n - 1)); // Append remainder as CRC
+    }
+
+    // CRC error detection
+    public static boolean checkCRC(String receivedData, String divisor) {
+        int n = divisor.length();
+        String remainder = receivedData;
+
+        // Perform the division on the received data
+        for (int i = 0; i < receivedData.length() - (n - 1); i++) {
+            if (remainder.charAt(i) == '1') {
+                String divisorSegment = divisor + "0".repeat(i);
+                remainder = xor(remainder, divisorSegment);
+            }
+        }
+
+        // If remainder is zero, data is correct
+        return remainder.substring(remainder.length() - (n - 1)).equals("0".repeat(n - 1));
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter data to send (binary): ");
+        String data = sc.nextLine();
+        System.out.print("Enter CRC polynomial (binary): ");
+        String divisor = sc.nextLine();
+
+        // Encode data using CRC
+        String encodedData = encode(data, divisor);
+        System.out.println("Encoded data (data + CRC): " + encodedData);
+
+        // Simulate receiving data (could introduce error manually)
+        System.out.print("Enter received data (binary, with or without error): ");
+        String receivedData = sc.nextLine();
+
+        // Check if the received data is correct
+        if (checkCRC(receivedData, divisor)) {
+            System.out.println("No error detected in received data.");
+        } else {
+            System.out.println("Error detected in received data.");
+        }
+
+        sc.close();
+    }
+}
+
+Input 
+Enter data to send (binary): 1101011011
+Enter CRC polynomial (binary): 1011
+
+output
+Encoded data (data + CRC): 11010110111111
+Enter received data (binary, with or without error): 11010110111111
+No error detected in received data.
+
+if you introduce an error in the received data:
+Enter received data (binary, with or without error): 11010110111011
+Error detected in received data.

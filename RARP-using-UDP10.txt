@@ -1,0 +1,123 @@
+Aim:
+To simulate Reverse Address Resolution Protocol (RARP) using UDP, where a client sends a MAC address to the server, and the server responds with the corresponding IP address.
+
+Algorithm:
+Server Side:
+
+The server listens for incoming UDP requests.
+
+It stores MAC-to-IP mappings in a map.
+
+When the server receives a request with a MAC address, it checks the map for the corresponding IP address and sends it back.
+
+Client Side:
+
+The client sends a MAC address to the server via UDP.
+
+The client waits for the server’s response with the corresponding IP address.
+
+Java Program: RARPServer.java (Server)
+import java.net.*;
+import java.util.*;
+
+public class RARPServer {
+    public static void main(String[] args) {
+        DatagramSocket socket = null;
+
+        try {
+            // Create the socket to listen on port 9876
+            socket = new DatagramSocket(9876);
+            System.out.println("RARP Server started, waiting for client request...");
+
+            // Predefined MAC to IP mappings
+            Map<String, String> macToIpMap = new HashMap<>();
+            macToIpMap.put("00:14:22:01:23:45", "192.168.1.1");
+            macToIpMap.put("00:14:22:01:23:46", "192.168.1.2");
+            macToIpMap.put("00:14:22:01:23:47", "192.168.1.3");
+
+            byte[] receiveData = new byte[1024];
+
+            while (true) {
+                // Receive packet from client
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                socket.receive(receivePacket);
+                String macAddress = new String(receivePacket.getData(), 0, receivePacket.getLength());
+
+                System.out.println("Received MAC address: " + macAddress);
+
+                // Check if the MAC address exists in the map
+                String ipAddress = macToIpMap.get(macAddress);
+                String response;
+                if (ipAddress != null) {
+                    response = "IP Address: " + ipAddress;
+                } else {
+                    response = "Error: MAC address not found";
+                }
+
+                // Send response back to client
+                InetAddress clientAddress = receivePacket.getAddress();
+                int clientPort = receivePacket.getPort();
+                DatagramPacket sendPacket = new DatagramPacket(response.getBytes(), response.length(), clientAddress, clientPort);
+                socket.send(sendPacket);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        }
+    }
+}
+
+Java Program: RARPClient.java (Client)
+import java.net.*;
+import java.util.*;
+
+public class RARPClient {
+    public static void main(String[] args) {
+        DatagramSocket socket = null;
+
+        try {
+            // Create the socket to send requests
+            socket = new DatagramSocket();
+
+            // Get the MAC address from the user
+            Scanner sc = new Scanner(System.in);
+            System.out.print("Enter MAC address to resolve: ");
+            String macAddress = sc.nextLine();
+
+            // Convert the MAC address to bytes and send the request
+            byte[] sendData = macAddress.getBytes();
+            InetAddress serverAddress = InetAddress.getByName("localhost");
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 9876);
+            socket.send(sendPacket);
+
+            // Receive the response from the server
+            byte[] receiveData = new byte[1024];
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            socket.receive(receivePacket);
+            String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
+
+            // Print the server's response
+            System.out.println("Server Response: " + response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        }
+    }
+}
+
+Output
+Server Side (RARPServer.java) Output:
+RARP Server started, waiting for client request...
+Received MAC address: 00:14:22:01:23:45
+
+Client Side (RARPClient.java) Output:
+Enter MAC address to resolve: 00:14:22:01:23:45
+Server Response: IP Address: 192.168.1.1
